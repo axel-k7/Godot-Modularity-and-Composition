@@ -1,0 +1,30 @@
+[gd_scene load_steps=5 format=3 uid="uid://bosotdieknxj4"]
+
+[ext_resource type="Script" uid="uid://dpi23cc0sqdsp" path="res://entities/player/player.gd" id="1_symyc"]
+[ext_resource type="Script" uid="uid://cdnwb8clb3rjp" path="res://components/input_manager.gd" id="2_abrql"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_abrql"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_sglur"]
+
+[node name="Player" type="CharacterBody3D" node_paths=PackedStringArray("_input_manager")]
+script = ExtResource("1_symyc")
+_input_manager = NodePath("InputManager")
+metadata/_custom_type_script = "uid://dpi23cc0sqdsp"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+shape = SubResource("CapsuleShape3D_abrql")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+mesh = SubResource("CapsuleMesh_sglur")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 3)
+
+[node name="InputManager" type="Node" parent="."]
+script = ExtResource("2_abrql")
+_input_pressed = Array[String](["jump"])
+_input_released = Array[String](["jump"])
+metadata/_custom_type_script = "uid://cdnwb8clb3rjp"
