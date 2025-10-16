@@ -1,171 +1,205 @@
 extends Node
 class_name Task
 
-
 enum Status {
-	FRESH,		#task not yet run / reset
-	RUNNING,	#task not yet completed, needs to run again
-	FAILED,		#task completed: failure
-	SUCCEEDED,	#task completed: success
-	CANCELLED	#task terminated by ancestor
+	FRESH,		#	task not yet run or has been reset
+	RUNNING,	#	task not yet completed, needs to run again
+	FAILED,		#	task finished unsuccessfully
+	SUCCEEDED,	#	task finished successfully
+	CANCELLED	#	task terminated by parent/ancestor
 }
 
-#emitted during given state
+#	emitted during given state
 signal task_running(task: Task)
 signal task_succeeded(task: Task)
 signal task_failed(task: Task)
 signal task_cancelled(task: Task)
 signal task_reset(task: Task)
 
-#reference to tree blackboard
+#	reference to tree blackboard
 var blackboard : Dictionary
 
-#conditional task that must return true for this task to run (optional)
+#	conditional task that must return true for a task to run (optional)
 @export var guard 	: Task	= null
 
+#	for propogating status and sharing blackboard data
 var tree	: BehaviourTree	= null
 var control	: Task			= null
 var status 	: Status		= Status.FRESH
 
-##entry / exit
+#	cached sub-tasks
+var _subtasks: Array[Task]	= []
 
+#	caches all sub-tasks on initialization
+func _ready():
+	_update_subtasks()
+
+
+## Entry / Exit ---------------------------------------------------------------------------------------
+
+#	initializes self and checks guard conditions, fails if guard doesn't succeed
+#	runs task-specific "on_start" logic
+#	initilizes sub-tasks with proper parent, tree and blackboard references (or private copy)
+#	repeats start() call in each sub-task
 func start() -> void:
 	status = Status.FRESH
 	blackboard = tree.blackboard if tree else {}
-	on_start()
-	for child in get_children():
-		if child is Task:
-			child.control = self
-			child.tree = self.tree
-			
-			if child is BehaviourTree:
-				if child.share_blackboard:
-					child.blackboard = self.blackboard
-				else:
-					child.blackboard = self.blackboard.duplicate(true)
-			else:
-				child.blackboard = self.blackboard
-				
-			child.start()
-
-func end() -> void:
-	if status in [Status.SUCCEEDED, Status.FAILED, Status.CANCELLED]:
-		on_end()			
-			
-
-##update
-
-func _tick(_delta:float) -> void:
-	if status == Status.RUNNING:
-		run(_delta)
-
-#executes task logic and calls status function once
-func run(_delta: float) -> void:
+	
 	if guard:
-		if guard.status != Status.FRESH:
+		if guard.status == Status.FRESH:
 			guard.start()
-		guard.run(_delta)
+		guard.tick(0.0)
 		if guard.status != Status.SUCCEEDED:
 			guard.reset()
 			_fail()
 			return
-	#task logic
+	
+	on_start()
+	for subtask in _subtasks:
+		subtask.control = self
+		subtask.tree = self.tree
+		
+		if subtask is BehaviourTree:
+			if subtask.share_blackboard:
+				subtask.blackboard = self.blackboard
+			else:
+				subtask.blackboard = self.blackboard.duplicate(true)
+		else:
+			subtask.blackboard = self.blackboard
+			
+		subtask.start()
 
 
-## abstract functions
-
-func on_start() -> void:
-	pass
-func on_end() -> void:
-	pass
-func child_success() -> void:
-	pass
-func child_fail() -> void:
-	pass
-func child_cancelled() -> void:
-	pass
-func child_running() -> void:
-	pass
+#	"on_end" logic can only be called on if task has a finished status
+func end() -> void:
+	if status in [Status.SUCCEEDED, Status.FAILED, Status.CANCELLED]:
+		on_end()
+	else: push_warning("task: '%s' called for end() without a finished status" %self.name)
 
 
-## status functions
+## Update ---------------------------------------------------------------------------------------		
 
+#	tick is called from a parent or controller
+#	"run" logic can only be called if task is running
+func tick(_delta:float) -> void:
+	if status == Status.RUNNING:
+		run(_delta)
+
+# executes task-specific logic and calls a status function once
+func run(_delta: float) -> void:
+	pass
+
+## Status Functions ---------------------------------------------------------------------------------------	
+
+#	sets task status and notifies parent of child status
+#	emits signal for potential external listeners
 func _running() -> void:
 	status = Status.RUNNING
 	if control:
-		control.child_running()
+		control.subtask_running()
 	emit_signal("task_running", self)
 
+#	completes task and does clean up logic
+func _complete(state: Status, callback: StringName, signal_name: StringName) -> void:
+	status = state
+	end()
+	if control:
+		control.call(callback)
+	emit_signal(signal_name, self)
+
 func _success() -> void:
-	status = Status.SUCCEEDED
-	end()
-	if control:
-		control.child_success()
-	emit_signal("task_succeeded", self)
-
+	_complete(Status.SUCCEEDED, "subtask_success", "task_succeeded")
 func _fail() -> void:
-	status = Status.FAILED
-	end()
-	if control:
-		control.child_fail()
-	emit_signal("task_failed", self)
+	_complete(Status.FAILED, "subtask_fail", "task_failed")
 
-func _cancel() -> void:
-	if status == Status.RUNNING:
+#	does clean up logic
+#	recursively cancels all sub-tasks
+func cancel() -> void:
+	if status in [Status.RUNNING, Status.FRESH]:
 		status = Status.CANCELLED
 		end()
-		for child in get_children():
-			if child is Task:
-				child.cancel()
+		for subtask in _subtasks:
+			subtask.cancel()
 		if control:
-			control.child_cancelled()
+			control.subtask_cancelled()
 		emit_signal("task_cancelled", self)
-		
+
+#	extension of cancel which resets task to initial state	
+#	recursively resets all sub-tasks
 func reset() -> void:
-	_cancel()
+	cancel()
 	status = Status.FRESH
 	control = null
 	tree = null
-	for child in get_children():
-		if child is Task:
-			child.reset()
+	for subtask in _subtasks:
+		subtask.reset()
 	emit_signal("task_reset", self)
 
 
-## copy functions
+## Abstract Hooks ---------------------------------------------------------------------------------------	
 
+#	for task initialization and cleanup
+func on_start() -> void:
+	pass	
+func on_end() -> void:
+	pass
+
+#	subtask status callbacks
+#	so tasks can react to sub-task events
+func subtask_success() -> void:
+	pass
+func subtask_fail() -> void:
+	pass
+func subtask_cancelled() -> void:
+	pass
+func subtask_running() -> void:
+	pass
+
+
+## Copy Functions ---------------------------------------------------------------------------------------	
+
+#	copies properties from this task to another
+#	subclasses should override to copy additional properties
 func _copy_to(task: Task) -> void:
 	task.status = status
 	task.control = control
 	task.tree = tree
 	task.guard = guard
-	#subclasses should override to copy additional properties
 
+# creates a complete deep copy of self, sub-tasks and guard
 func clone_task() -> Task:
 	var clone = get_script().new()
 	_copy_to(clone)
-	for child in get_children():
-		if child is Task:
-			var child_clone = child._clone_task()
-			clone.add_child(child_clone)
-			child_clone.control = clone
-			child_clone.tree = clone.tree
+	for subtask in _subtasks:
+		var subtask_clone = subtask.clone_task()
+		clone.add_subtask(subtask_clone)
+		subtask_clone.control = clone
+		subtask_clone.tree = clone.tree
 	
 	if guard != null:
-		clone.guard = guard._clone_task()
+		clone.guard = guard.clone_task()
 	return clone
-	
-	
-	
-	
-##USE LATER
-#var _task_children: Array[Task] = []
-#func _update_task_children() -> void:
-#	_task_children.clear()
-#	for child in get_children():
-#		if child is Task:
-#			_task_children.append(child)
 
-#func _pool_reset() -> void:
-#override in subclasses to reset task-specific data
-#might implement later
+
+## Helper Functions ---------------------------------------------------------------------------------------
+
+#	updates cached sub-tasks
+func _update_subtasks() -> void:
+	_subtasks.clear()
+	for child in get_children():
+		if child is Task:
+			_subtasks.append(child)
+
+func add_subtask(subtask: Task):
+	if subtask.get_parent() != self:
+		add_child(subtask)
+	if subtask not in _subtasks:
+		_subtasks.append(subtask)
+	
+func remove_subtask(subtask: Task) -> void:
+	if subtask in _subtasks:
+		_subtasks.erase(subtask)
+	remove_child(subtask)
+
+
+##pooling?
