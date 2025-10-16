@@ -12,17 +12,19 @@ class_name BehaviourTree
 func _ready() -> void:
 	super._ready()
 	
-	if not _get_parent_tree():
+	if not share_blackboard or not _get_parent_tree():
 		blackboard = {}
 	
-	if _subtasks.size() == 0:
-		push_warning("behaviour tree '%s' has no sub-tasks" %self.name)
-	else:
-		if _subtasks.size() > 1:
-			push_warning("behaviour tree '%s' has multiple sub-tasks, using first: '%s'" % [self.name, _subtasks[0].name])
+	if _subtasks.is_empty():
+		push_warning("behaviour tree '%s' has no sub-tasks -> disabling" % self.name)
+		enabled = false
+		return
+	elif not root_task:
+		push_warning("behaviour tree '%s' root task not set -> using '%s'" % [self.name, _subtasks[0].name])
 		root_task = _subtasks[0]
 	
-	assert(root_task != null, "behaviour tree '%s' has no root task" %self.name)
+	if not root_task:
+		push_error("behaviour tree '%s' has no root task" %self.name)
 	root_task.tree = self
 
 
@@ -31,15 +33,15 @@ func _ready() -> void:
 #	overriden task.gd tick() function
 #	automatic restart after task finish
 func tick(_delta: float) -> void:
-	if enabled:
-		match status:
-			Status.FRESH, Status.RUNNING:
-				run(_delta)
-			Status.SUCCEEDED, Status.FAILED:
-				if auto_restart:
-					reset()
-					start()
-
+	if not enabled:
+		return
+	match status:
+		Status.FRESH, Status.RUNNING:
+			run(_delta)
+		Status.SUCCEEDED, Status.FAILED:
+			if auto_restart:
+				reset()
+				start()
 
 #	see task.gd run() function
 #	run function is delegated to the root task
@@ -47,7 +49,7 @@ func tick(_delta: float) -> void:
 func run(_delta: float) -> void:
 	if status == Status.FRESH:
 		start()
-	root_task.run(_delta)
+	root_task.tick(_delta)
 	#status = root_task.status 
 	#	^ 
 	#	might be redunant because of subtask callback mirroring
@@ -59,7 +61,7 @@ func run(_delta: float) -> void:
 #	resets private blackboards
 func reset() -> void:
 	super.reset()
-	if not share_blackboard:
+	if not share_blackboard and _get_parent_tree():
 		blackboard.clear()
 
 
@@ -98,6 +100,6 @@ func _copy_to(task: Task) -> void:
 #	loops upward in the hierarchy and returns the first BehaviourTree it finds
 func _get_parent_tree() -> BehaviourTree:
 	var parent := get_parent()
-	while parent and parent is not BehaviourTree:
+	while parent and not (parent is BehaviourTree):
 		parent = parent.get_parent()
 	return parent if parent is BehaviourTree else null

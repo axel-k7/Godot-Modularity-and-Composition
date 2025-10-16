@@ -9,7 +9,7 @@ enum Status {
 	CANCELLED	#	task terminated by parent/ancestor
 }
 
-#	emitted during given state
+#	emitted when state is entered
 signal task_running(task: Task)
 signal task_succeeded(task: Task)
 signal task_failed(task: Task)
@@ -21,6 +21,7 @@ var blackboard : Dictionary
 
 #	conditional task that must return true for a task to run (optional)
 @export var guard 	: Task	= null
+@export var reset_guard_on_fail: bool = true
 
 #	for propogating status and sharing blackboard data
 var tree	: BehaviourTree	= null
@@ -48,9 +49,10 @@ func start() -> void:
 	if guard:
 		if guard.status == Status.FRESH:
 			guard.start()
-		guard.tick(0.0)
+		guard.tick(0.0) # <----- ONLY WORKS FOR SIMPLE GUARDS, NEED IMPROVE WITH DELTA
 		if guard.status != Status.SUCCEEDED:
-			guard.reset()
+			if reset_guard_on_fail:
+				guard.reset()
 			_fail()
 			return
 	
@@ -59,10 +61,7 @@ func start() -> void:
 		subtask.control = self
 		subtask.tree = self.tree
 		
-		if subtask is BehaviourTree:
-			if subtask.share_blackboard:
-				subtask.blackboard = self.blackboard
-			else:
+		if subtask is BehaviourTree and not subtask.share_blackboard:
 				subtask.blackboard = self.blackboard.duplicate(true)
 		else:
 			subtask.blackboard = self.blackboard
@@ -107,6 +106,7 @@ func _complete(state: Status, callback: StringName, signal_name: StringName) -> 
 		control.call(callback)
 	emit_signal(signal_name, self)
 
+	
 func _success() -> void:
 	_complete(Status.SUCCEEDED, "subtask_success", "task_succeeded")
 func _fail() -> void:
@@ -128,11 +128,11 @@ func cancel() -> void:
 #	recursively resets all sub-tasks
 func reset() -> void:
 	cancel()
+	for subtask in _subtasks:
+		subtask.reset()
 	status = Status.FRESH
 	control = null
 	tree = null
-	for subtask in _subtasks:
-		subtask.reset()
 	emit_signal("task_reset", self)
 
 
@@ -183,14 +183,13 @@ func clone_task() -> Task:
 
 ## Helper Functions ---------------------------------------------------------------------------------------
 
-#	updates cached sub-tasks
 func _update_subtasks() -> void:
 	_subtasks.clear()
 	for child in get_children():
 		if child is Task:
 			_subtasks.append(child)
 
-func add_subtask(subtask: Task):
+func add_subtask(subtask: Task) -> void:
 	if subtask.get_parent() != self:
 		add_child(subtask)
 	if subtask not in _subtasks:
