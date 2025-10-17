@@ -1,30 +1,59 @@
-[gd_scene load_steps=5 format=3 uid="uid://bosotdieknxj4"]
+[gd_scene load_steps=10 format=3 uid="uid://bosotdieknxj4"]
 
 [ext_resource type="Script" uid="uid://dpi23cc0sqdsp" path="res://entities/player/player.gd" id="1_symyc"]
 [ext_resource type="Script" uid="uid://cdnwb8clb3rjp" path="res://components/input_manager.gd" id="2_abrql"]
+[ext_resource type="Script" uid="uid://bhwqafxq0q31y" path="res://components/health_component.gd" id="3_fkugw"]
+[ext_resource type="Script" uid="uid://dovqfkur4wbi7" path="res://components/hitbox_component.gd" id="4_8fjmc"]
+[ext_resource type="Script" uid="uid://dedcrsv4lfa4d" path="res://components/movement_component.gd" id="5_qiwj3"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_abrql"]
+albedo_color = Color(0.3372549, 0.56078434, 1, 1)
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_sglur"]
+material = SubResource("StandardMaterial3D_abrql")
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_abrql"]
 
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_sglur"]
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_26q78"]
 
-[node name="Player" type="CharacterBody3D" node_paths=PackedStringArray("_input_manager")]
+[node name="Player" type="CharacterBody3D" node_paths=PackedStringArray("input_manager", "health_component", "hitbox_component", "movement_component")]
 script = ExtResource("1_symyc")
-_input_manager = NodePath("InputManager")
+input_manager = NodePath("InputManager")
+health_component = NodePath("HealthComponent")
+hitbox_component = NodePath("HitboxComponent")
+movement_component = NodePath("MovementComponent")
 metadata/_custom_type_script = "uid://dpi23cc0sqdsp"
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
-shape = SubResource("CapsuleShape3D_abrql")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 mesh = SubResource("CapsuleMesh_sglur")
 
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+shape = SubResource("CapsuleShape3D_abrql")
+
 [node name="Camera3D" type="Camera3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 3)
+
+[node name="HitboxComponent" type="Area3D" parent="."]
+script = ExtResource("4_8fjmc")
+metadata/_custom_type_script = "uid://dovqfkur4wbi7"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="HitboxComponent"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+shape = SubResource("CapsuleShape3D_26q78")
 
 [node name="InputManager" type="Node" parent="."]
 script = ExtResource("2_abrql")
 _input_pressed = Array[String](["jump"])
 _input_released = Array[String](["jump"])
 metadata/_custom_type_script = "uid://cdnwb8clb3rjp"
+
+[node name="HealthComponent" type="Node" parent="."]
+script = ExtResource("3_fkugw")
+metadata/_custom_type_script = "uid://bhwqafxq0q31y"
+
+[node name="MovementComponent" type="Node" parent="." node_paths=PackedStringArray("host")]
+script = ExtResource("5_qiwj3")
+host = NodePath("..")
+metadata/_custom_type_script = "uid://dedcrsv4lfa4d"

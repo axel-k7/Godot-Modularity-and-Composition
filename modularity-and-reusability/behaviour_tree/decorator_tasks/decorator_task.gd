@@ -2,7 +2,7 @@ extends Task
 class_name DecoratorTask
 #	something something wrapped task
 
-@export var wrapped_task: Task = null
+var wrapped_task: Task = null
 
 #	does not account for switching subtask during runtime
 func on_start():

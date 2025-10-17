@@ -1,8 +1,11 @@
 extends Node
 class_name MovementComponent
 
-func _jump(_params = []):
-	self.velocity.y += 10
+@export var host: CharacterBody3D
 
-func _fall(_params = []):
-	self.velocity.y -= 10
+@export var acceleration: float
+@export var deceleration: float
+@export var movement_multiplier: float
+@export var base_movement_speed: float
+
+var _local_dir: Vector3 = Vector3.ZERO

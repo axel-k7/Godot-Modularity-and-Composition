@@ -57,9 +57,11 @@ func start() -> void:
 			return
 	
 	on_start()
+	
 	for subtask in _subtasks:
 		subtask.control = self
-		subtask.tree = self.tree
+		if self.tree:
+			subtask.tree = self.tree
 		
 		if subtask is BehaviourTree and not subtask.share_blackboard:
 				subtask.blackboard = self.blackboard.duplicate(true)
@@ -81,7 +83,7 @@ func end() -> void:
 #	tick is called from a parent or controller
 #	"run" logic can only be called if task is running
 func tick(_delta:float) -> void:
-	if status == Status.RUNNING:
+	if status in [Status.RUNNING, Status.FRESH]:
 		run(_delta)
 
 # executes task-specific logic and calls a status function once

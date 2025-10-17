@@ -1,14 +1,14 @@
-extends CharacterBody3D
+extends Character
 class_name Player
 
-@export var _input_manager: InputManager
-@export var _movement_component: MovementComponent
+@export var input_manager: InputManager
 
 func _ready() -> void:
-	var _callable = Callable(_movement_component, "_jump")
-	_input_manager.connect_signal("jump", InputManager.InputTypes.PRESSED, _callable)
-	_callable = Callable(_movement_component, "_fall")
-	_input_manager.connect_signal("jump", InputManager.InputTypes.RELEASED, _callable)
+	var _callable = Callable(self, "_jump")
+	#input_manager.connect_signal("jump", InputManager.InputTypes.PRESSED, _callable)
 
-func _physics_process(delta: float) -> void:
+func _physics_process(_delta: float) -> void:
 	move_and_slide()
+
+func _jump():
+	print("a")

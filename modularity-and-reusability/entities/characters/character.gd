@@ -3,3 +3,4 @@ class_name Character
 
 @export var health_component: HealthComponent
 @export var hitbox_component: HitboxComponent
+@export var movement_component: MovementComponent
