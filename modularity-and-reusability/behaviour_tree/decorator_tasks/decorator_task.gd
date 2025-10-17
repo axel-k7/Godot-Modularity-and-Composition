@@ -1,5 +1,5 @@
 extends Task
-class_name Decorator
+class_name DecoratorTask
 #	something something wrapped task
 
 @export var wrapped_task: Task = null

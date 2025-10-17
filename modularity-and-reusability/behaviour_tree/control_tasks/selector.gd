@@ -1,4 +1,4 @@
-extends CompositeTask
+extends ControlTask
 class_name Selector
 #	returns success if any subtask is successful
 

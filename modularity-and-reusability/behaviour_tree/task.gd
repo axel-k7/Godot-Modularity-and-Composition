@@ -20,8 +20,8 @@ signal task_reset(task: Task)
 var blackboard : Dictionary
 
 #	conditional task that must return true for a task to run (optional)
-@export var guard 	: Task	= null
-@export var reset_guard_on_fail: bool = true
+@export var guard : Task	= null
+@export var reset_guard_on_fail : bool = true
 
 #	for propogating status and sharing blackboard data
 var tree	: BehaviourTree	= null

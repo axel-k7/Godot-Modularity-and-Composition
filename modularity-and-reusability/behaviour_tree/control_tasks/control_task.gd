@@ -1,5 +1,5 @@
 extends Task
-class_name CompositeTask
+class_name ControlTask
 
 var subtask_index: int = 0
 

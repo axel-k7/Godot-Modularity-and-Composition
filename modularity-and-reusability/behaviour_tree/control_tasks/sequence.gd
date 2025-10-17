@@ -1,4 +1,4 @@
-extends CompositeTask
+extends ControlTask
 class_name Sequence
 #	returns success if all subtasks are successful
 

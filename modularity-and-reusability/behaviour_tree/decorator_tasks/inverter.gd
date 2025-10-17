@@ -1,4 +1,4 @@
-extends Decorator
+extends DecoratorTask
 class_name Inverter
 #	inverts status of wrapped task
 
