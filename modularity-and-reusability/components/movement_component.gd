@@ -9,3 +9,6 @@ class_name MovementComponent
 @export var base_movement_speed: float
 
 var _local_dir: Vector3 = Vector3.ZERO
+
+func jump():
+	host.velocity.y += 10

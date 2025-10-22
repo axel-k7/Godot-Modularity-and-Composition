@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bn1v5x4b11pww"]
+
+[ext_resource type="Script" uid="uid://q65borulqasf" path="res://abilities/scenes/earthshatter.gd" id="1_dynv6"]
+
+[node name="Earthshatter" type="Node3D"]
+script = ExtResource("1_dynv6")

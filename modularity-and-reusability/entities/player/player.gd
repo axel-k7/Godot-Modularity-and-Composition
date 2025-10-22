@@ -1,14 +1,16 @@
 extends Character
 class_name Player
 
-@export var input_manager: InputManager
+@export var input_listener: InputListener
 
 func _ready() -> void:
-	var _callable = Callable(self, "_jump")
-	#input_manager.connect_signal("jump", InputManager.InputTypes.PRESSED, _callable)
+	input_listener.action_triggered.connect(self._on_action_triggered)
 
 func _physics_process(_delta: float) -> void:
 	move_and_slide()
 
-func _jump():
-	print("a")
+func _on_action_triggered(action_name: String, pressed: bool):
+	match action_name:
+		"gameplay_jump":
+			if pressed:
+				movement_component.jump()

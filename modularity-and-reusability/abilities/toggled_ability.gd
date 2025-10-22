@@ -1,5 +1,4 @@
 @abstract extends Ability
 class_name ToggledAbility
 
-
-	_enter()
+var toggle: Toggle = Toggle.new()
