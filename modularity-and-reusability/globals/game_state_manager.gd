@@ -10,7 +10,7 @@ enum GameState {
 signal game_state_changed(new_state: GameState)
 
 #private, don't change through outside code
-var _state: GameState = GameState.GAMEPLAY
+var _state: GameState = GameState.MENU
 
 #public, do GameStateManager.state = new_state
 #mostly just playing around with setget vars

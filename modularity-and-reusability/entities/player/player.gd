@@ -14,3 +14,6 @@ func _on_action_triggered(action_name: String, pressed: bool):
 		"gameplay_jump":
 			if pressed:
 				movement_component.jump()
+		"gameplay_forward":
+			if pressed:
+				pass

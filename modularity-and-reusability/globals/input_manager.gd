@@ -14,12 +14,16 @@ var mouse_enabled: bool = true
 var action_states: Dictionary = {}
 
 func _ready():
+	if gsm:
+		gsm.connect("game_state_changed", _change_game_state)
+	
 	_initialize_actions()
 
 func _initialize_actions():
 	action_states.clear()
 	for action in InputMap.get_actions():
-		action_states[action] = false
+		if not action.begins_with("ui_"): #<- filters out built in actions so action polling doesnt go craazyy
+			action_states[action] = false
 
 func register_listener(listener: Node, actions: Array[String]) -> void:
 	for action in actions:
@@ -55,7 +59,7 @@ func _process(_delta: float) -> void:
 		if not action_states.has(action):
 			action_states[action] = false
 		var prev_pressed: bool = action_states[action]
-		var axis_value: float = Input.get_action_strength(action)
+		#var axis_value: float = Input.get_action_strength(action)
 
 		if pressed and not prev_pressed:
 			_notify_listeners(action, true)
@@ -73,3 +77,12 @@ func _notify_listeners(action_name: String, pressed: bool) -> void:
 
 func _action_allowed_in_context(action_name: String) -> bool:
 	return action_name.begins_with(current_context + "_") or action_name.begins_with("global_")
+
+func _change_game_state(_new_state: GameStateManager.GameState): #ew
+	match _new_state:
+		GameStateManager.GameState.GAMEPLAY:
+			current_context = "gameplay"
+		GameStateManager.GameState.MENU:
+			current_context = "menu"
+		GameStateManager.GameState.PAUSED:
+			current_context = "paused"

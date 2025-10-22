@@ -54,5 +54,5 @@ metadata/_custom_type_script = "uid://dedcrsv4lfa4d"
 
 [node name="InputListener" type="Node" parent="."]
 script = ExtResource("2_abrql")
-listened_actions = Array[String](["gameplay_jump"])
+listened_actions = Array[String](["gameplay_jump", "gameplay_forward"])
 metadata/_custom_type_script = "uid://cdnwb8clb3rjp"
