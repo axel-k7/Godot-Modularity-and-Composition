@@ -1,14 +1,16 @@
-[gd_scene load_steps=14 format=3 uid="uid://cqelal4m1nf4p"]
+[gd_scene load_steps=16 format=3 uid="uid://cqelal4m1nf4p"]
 
 [ext_resource type="Script" uid="uid://c30wjn2iimueq" path="res://entities/characters/test_character/test_character.gd" id="1_jaoac"]
 [ext_resource type="Script" uid="uid://bhwqafxq0q31y" path="res://components/health_component.gd" id="2_jaoac"]
 [ext_resource type="Script" uid="uid://bfty3a23w5lwg" path="res://entities/characters/test_character/components/test_movement_component.gd" id="3_pwfl5"]
 [ext_resource type="Script" uid="uid://dovqfkur4wbi7" path="res://components/hitbox_component.gd" id="4_ljxi7"]
 [ext_resource type="Script" uid="uid://byta28dtp5ovq" path="res://behaviour_tree/behaviour_tree.gd" id="5_htkbl"]
-[ext_resource type="Script" uid="uid://brbooej8vpeec" path="res://components/velocity_component.gd" id="5_vyuve"]
+[ext_resource type="Script" uid="uid://brbooej8vpeec" path="res://components/movement/velocity_component.gd" id="5_vyuve"]
 [ext_resource type="Script" uid="uid://cdwdyjjtqn132" path="res://behaviour_tree/decorator_tasks/repeat.gd" id="6_hg2xp"]
 [ext_resource type="Script" uid="uid://bsrgybr8va44g" path="res://entities/characters/test_character/tasks/move_up_task.gd" id="6_jaoac"]
+[ext_resource type="Script" uid="uid://dec665sgcebpd" path="res://components/movement/gravity_component.gd" id="7_dq6dq"]
 [ext_resource type="Script" uid="uid://drrrusnv7o2fa" path="res://behaviour_tree/decorator_tasks/force_failure.gd" id="7_ljxi7"]
+[ext_resource type="Script" uid="uid://cr4058u3u3sov" path="res://components/movement/physics_mover_component.gd" id="10_opq77"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_sd7q5"]
 
@@ -20,12 +22,13 @@ material = SubResource("StandardMaterial3D_pwfl5")
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_7812d"]
 
-[node name="TestCharacter" type="CharacterBody3D" node_paths=PackedStringArray("behaviour_tree", "health_component", "hitbox_component", "movement_component")]
+[node name="TestCharacter" type="CharacterBody3D" node_paths=PackedStringArray("behaviour_tree", "health_component", "hitbox_component", "velocity_component", "movement_component")]
 script = ExtResource("1_jaoac")
 behaviour_tree = NodePath("BehaviourTree")
 health_component = NodePath("HealthComponent")
 hitbox_component = NodePath("HitboxComponent")
-movement_component = NodePath("MovementComponent")
+velocity_component = NodePath("VelocityComponent")
+movement_component = NodePath("GroundMovementComponent")
 metadata/_custom_type_script = "uid://by40ky2y8akxy"
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
@@ -48,14 +51,26 @@ shape = SubResource("CapsuleShape3D_7812d")
 script = ExtResource("2_jaoac")
 metadata/_custom_type_script = "uid://bhwqafxq0q31y"
 
-[node name="MovementComponent" type="Node" parent="." node_paths=PackedStringArray("velocity_component")]
-script = ExtResource("3_pwfl5")
-velocity_component = NodePath("../VelocityComponent")
-metadata/_custom_type_script = "uid://dedcrsv4lfa4d"
-
 [node name="VelocityComponent" type="Node" parent="."]
 script = ExtResource("5_vyuve")
 metadata/_custom_type_script = "uid://brbooej8vpeec"
+
+[node name="GroundMovementComponent" type="Node" parent="." node_paths=PackedStringArray("velocity_component")]
+script = ExtResource("3_pwfl5")
+velocity_component = NodePath("../VelocityComponent")
+metadata/_custom_type_script = "uid://cfhxjb864qhlw"
+
+[node name="PhysicsMoverComponent" type="Node" parent="." node_paths=PackedStringArray("velocity_component", "host")]
+script = ExtResource("10_opq77")
+velocity_component = NodePath("../VelocityComponent")
+host = NodePath("..")
+metadata/_custom_type_script = "uid://cr4058u3u3sov"
+
+[node name="GravityComponent" type="Node" parent="." node_paths=PackedStringArray("velocity_component", "host")]
+script = ExtResource("7_dq6dq")
+velocity_component = NodePath("../VelocityComponent")
+host = NodePath("..")
+metadata/_custom_type_script = "uid://dec665sgcebpd"
 
 [node name="BehaviourTree" type="Node" parent="." node_paths=PackedStringArray("root_task")]
 script = ExtResource("5_htkbl")

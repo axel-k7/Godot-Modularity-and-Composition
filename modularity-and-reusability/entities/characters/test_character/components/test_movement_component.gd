@@ -1,4 +1,4 @@
-extends MovementComponent
+extends GroundMovementComponent
 
-func move_up():
-	pass#host.velocity.y += 4
+func jump():
+	velocity_component.apply_impulse(Vector3(0,6,0))
