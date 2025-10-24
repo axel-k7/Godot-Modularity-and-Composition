@@ -1,10 +1,12 @@
-[gd_scene load_steps=10 format=3 uid="uid://bosotdieknxj4"]
+[gd_scene load_steps=12 format=3 uid="uid://bosotdieknxj4"]
 
 [ext_resource type="Script" uid="uid://dpi23cc0sqdsp" path="res://entities/player/player.gd" id="1_symyc"]
 [ext_resource type="Script" uid="uid://cdnwb8clb3rjp" path="res://components/input_listener.gd" id="2_abrql"]
 [ext_resource type="Script" uid="uid://bhwqafxq0q31y" path="res://components/health_component.gd" id="3_fkugw"]
 [ext_resource type="Script" uid="uid://dovqfkur4wbi7" path="res://components/hitbox_component.gd" id="4_8fjmc"]
+[ext_resource type="Script" uid="uid://cr4058u3u3sov" path="res://components/physics_mover_component.gd" id="5_26q78"]
 [ext_resource type="Script" uid="uid://dedcrsv4lfa4d" path="res://components/movement_component.gd" id="5_qiwj3"]
+[ext_resource type="Script" uid="uid://brbooej8vpeec" path="res://components/velocity_component.gd" id="6_8fjmc"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_abrql"]
 albedo_color = Color(0.3372549, 0.56078434, 1, 1)
@@ -17,6 +19,7 @@ material = SubResource("StandardMaterial3D_abrql")
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_26q78"]
 
 [node name="Player" type="CharacterBody3D" node_paths=PackedStringArray("input_listener", "health_component", "hitbox_component", "movement_component")]
+axis_lock_linear_y = true
 script = ExtResource("1_symyc")
 input_listener = NodePath("InputListener")
 health_component = NodePath("HealthComponent")
@@ -47,12 +50,22 @@ shape = SubResource("CapsuleShape3D_26q78")
 script = ExtResource("3_fkugw")
 metadata/_custom_type_script = "uid://bhwqafxq0q31y"
 
-[node name="MovementComponent" type="Node" parent="." node_paths=PackedStringArray("host")]
+[node name="MovementComponent" type="Node" parent="." node_paths=PackedStringArray("velocity_component")]
 script = ExtResource("5_qiwj3")
-host = NodePath("..")
+velocity_component = NodePath("../VelocityComponent")
 metadata/_custom_type_script = "uid://dedcrsv4lfa4d"
+
+[node name="PhysicsMoverComponent" type="Node" parent="." node_paths=PackedStringArray("velocity_component", "host")]
+script = ExtResource("5_26q78")
+velocity_component = NodePath("../VelocityComponent")
+host = NodePath("..")
+metadata/_custom_type_script = "uid://cr4058u3u3sov"
 
 [node name="InputListener" type="Node" parent="."]
 script = ExtResource("2_abrql")
 listened_actions = Array[String](["gameplay_jump", "gameplay_forward"])
 metadata/_custom_type_script = "uid://cdnwb8clb3rjp"
+
+[node name="VelocityComponent" type="Node" parent="."]
+script = ExtResource("6_8fjmc")
+metadata/_custom_type_script = "uid://brbooej8vpeec"
